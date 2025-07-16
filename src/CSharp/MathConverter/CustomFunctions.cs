@@ -7,6 +7,9 @@ using System.Reflection;
 
 #if WPF
 using System.Windows;
+#elif AVALONIA
+using Avalonia;
+using Avalonia.Data;
 #endif
 
 namespace HexInnovation
@@ -25,6 +28,8 @@ namespace HexInnovation
             return Microsoft.Maui.Controls.BindableProperty.UnsetValue;
 #elif WPF
             return DependencyProperty.UnsetValue;
+#elif AVALONIA
+            return AvaloniaProperty.UnsetValue;
 #endif
         }
     }

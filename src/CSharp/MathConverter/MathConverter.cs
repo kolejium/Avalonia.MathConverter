@@ -19,6 +19,9 @@ using BindableProperty = System.Windows.DependencyProperty;
 using System.Windows;
 using System.Windows.Data;
 using System.Windows.Markup;
+#elif AVALONIA
+using Avalonia.Data.Converters;
+using Avalonia.Markup.Xaml;
 #endif
 
 namespace HexInnovation
@@ -26,7 +29,9 @@ namespace HexInnovation
     /// <summary>
     /// MathConverter is a WPF Converter class that does it all.
     /// </summary>
+#if WPF || MAUI || XAMARIN
     [ContentProperty(nameof(CustomFunctions))]
+#endif
     public class MathConverter : IValueConverter, IMultiValueConverter
     {
         /// <summary>
@@ -63,12 +68,19 @@ namespace HexInnovation
         /// <returns>The <paramref name="arg"/> passed in, or <code>null</code> if the <paramref name="arg"/> is equal to <see cref="BindableProperty.UnsetValue"/></returns>
         private object SanitizeBinding(object arg, int argIndex, int totalBinding, object parameter, Type targetType)
         {
+#if !AVALONIA
             if (arg == BindableProperty.UnsetValue && !AllowUnsetValue)
             {
                 Debug.WriteLine($"Encountered {nameof(BindableProperty.UnsetValue)} in the {(totalBinding > 1 ? $"{ComputeOrdinal(argIndex + 1)} " : "")}argument while trying to convert to type \"{targetType.FullName}\" using the ConverterParameter {(parameter == null ? "'null'" : $"\"{parameter}\"")}. Double-check that your binding is correct.");
                 return null;
             }
-
+#else
+            if (arg is Avalonia.Data.BindingNotification { ErrorType: Avalonia.Data.BindingErrorType.Error } && !AllowUnsetValue)
+            {
+                Debug.WriteLine($"Encountered BindingNotification with error in the {(totalBinding > 1 ? $"{ComputeOrdinal(argIndex + 1)} " : "")}argument while trying to convert to type \"{targetType.FullName}\" using the ConverterParameter {(parameter == null ? "'null'" : $"\"{parameter}\"")}. Double-check that your binding is correct.");
+                return null;
+            }
+#endif
             return arg;
         }
 
@@ -127,7 +139,7 @@ namespace HexInnovation
         /// This eliminates the need to parse the same statement over and over.
         /// </summary>
         private Dictionary<string, AbstractSyntaxTree[]> _cachedResults = new Dictionary<string, AbstractSyntaxTree[]>();
-#if !WPF
+#if !WPF && (MAUI || XAMARIN)
         private static readonly Dictionary<Type, PlatformTypeConverter> PlatformTypeConverters = new()
 #if MAUI
             { { typeof(GridLength), new GridLengthTypeConverter() } }
@@ -186,6 +198,11 @@ namespace HexInnovation
             return ConvertType(finalAnswerToConvert, targetType);
         }
 
+        public object Convert(IList<object> values, Type targetType, object parameter, CultureInfo culture)
+        {
+            return Convert(values.ToArray(), targetType, parameter, culture);
+        }
+
         /// <summary>
         /// Converts a value to a given type. Returns the input value if the type conversion fails.
         /// This function tries the following things:
@@ -227,7 +244,7 @@ namespace HexInnovation
                 targetType = newTarget;
             }
 
-#if !WPF
+#if !WPF && (MAUI || XAMARIN)
             // Let's try PlatformTypeConverter
             var typeConverter = GetPlatformTypeConverter(targetType);
 
@@ -291,7 +308,7 @@ namespace HexInnovation
             // WE CAN'T CONVERT BACK
             throw new NotSupportedException();
         }
-#if !WPF
+#if !WPF && (MAUI || XAMARIN)
         private static PlatformTypeConverter GetPlatformTypeConverter(Type targetType)
         {
             if (PlatformTypeConverters.ContainsKey(targetType))

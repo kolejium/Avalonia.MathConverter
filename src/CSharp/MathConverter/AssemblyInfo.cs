@@ -5,6 +5,8 @@ using System.Runtime.InteropServices;
 using Xamarin.Forms;
 #elif MAUI
 using Microsoft.Maui.Controls;
+#elif AVALONIA
+using Avalonia.Metadata;
 #else
 using System.Windows;
 using System.Windows.Markup;

@@ -16,6 +16,10 @@ using Microsoft.Maui.Controls.Xaml;
 #elif XAMARIN
 using Xamarin.Forms;
 using Xamarin.Forms.Xaml;
+#elif AVALONIA
+using Avalonia;
+using Avalonia.Data;
+using Avalonia.Markup.Xaml;
 #endif
 
 namespace HexInnovation;
@@ -27,13 +31,15 @@ namespace HexInnovation;
 #if WPF
 [MarkupExtensionReturnType(typeof(object))]
 [Localizability(LocalizationCategory.None, Modifiability = Modifiability.Unmodifiable, Readability = Readability.Unreadable)]
-#else
+#elif MAUI || XAMARIN
 [ContentProperty(nameof(Expression))]
 [AcceptEmptyServiceProvider]
 #endif
 public sealed class ConvertExtension
 #if WPF
     : MultiBinding
+#elif AVALONIA
+    : MarkupExtension
 #else
     : IMarkupExtension<BindingBase>
 #endif
@@ -63,7 +69,15 @@ public sealed class ConvertExtension
     /// <summary>
     /// A binding to <see cref="BindableProperty.UnsetValue"/> that is used if we skip a value when adding bindings.
     /// </summary>
-    private static readonly Binding unsetValueBinding = new Binding { Source = BindableProperty.UnsetValue };
+    private static readonly Binding unsetValueBinding = new Binding
+    {
+        Source =
+#if AVALONIA
+            AvaloniaProperty.UnsetValue
+#else
+            BindableProperty.UnsetValue
+#endif
+    };
 
     /// <summary>
     /// Creates a new ConvertExtension
@@ -90,6 +104,13 @@ public sealed class ConvertExtension
     {
         Expression = expression;
     }
+#elif AVALONIA
+    /// <summary>
+    /// Returns a MultiBinding with a x<see cref="MathConverter"/> to convert the value as specified.
+    /// </summary>
+    /// <param name="serviceProvider">The service that provides the value.</param>
+    /// <returns>A MultiBinding that uses a MathConverter</returns>
+    public override object ProvideValue(IServiceProvider serviceProvider) => _binding;
 #else
     /// <summary>
     /// Returns a MultiBinding with a x<see cref="MathConverter"/> to convert the value as specified.
@@ -146,22 +167,39 @@ public sealed class ConvertExtension
     }
 #endif
 
+#if WPF || MAUI || XAMARIN
     private void SetBinding(int index, BindingBase binding)
     {
         while (Bindings.Count < index)
             Bindings.Add(unsetValueBinding);
 
         if (Bindings.Count == index)
-            Bindings.Add(binding);
+             Bindings.Add(binding);
         else
             Bindings[index] = binding;
-    }
 
-#if !WPF
+    }
+#elif Avalonia
+    private void SetBinding(int index, IBinding binding)
+    {
+        while (_binding.Bindings.Count < index)
+            _binding.Bindings.Add(unsetValueBinding);
+
+        if (_binding.Bindings.Count == index)
+            _binding.Bindings.Add(binding);
+        else
+            _binding.Bindings[index] = binding;
+    }
+#endif
+
+
+
+#if !WPF && (MAUI || XAMARIN)
     private IList<BindingBase> Bindings => _binding.Bindings;
 #endif
 
-    /// <summary>
+#if WPF || MAUI || XAMARIN
+/// <summary>
     /// The first variable (accessed by [0] or x)
     /// </summary>
     public BindingBase x
@@ -241,4 +279,88 @@ public sealed class ConvertExtension
         get => Bindings[9];
         set => SetBinding(9, value);
     }
+#elif Avalonia
+    /// <summary>
+    /// The first variable (accessed by [0] or x)
+    /// </summary>
+    public IBinding x
+    {
+        get => _binding.Bindings[0];
+        set => SetBinding(0, value);
+    }
+    /// <summary>
+    /// The second variable (accessed by [1] or y)
+    /// </summary>
+    public IBinding y
+    {
+        get => _binding.Bindings[1];
+        set => SetBinding(1, value);
+    }
+    /// <summary>
+    /// The third variable (accessed by [2] or z)
+    /// </summary>
+    public IBinding z
+    {
+        get => _binding.Bindings[2];
+        set => SetBinding(2, value);
+    }
+    /// <summary>
+    /// The fourth variable (accessed by [3])
+    /// </summary>
+    public IBinding Var3
+    {
+        get => _binding.Bindings[3];
+        set => SetBinding(3, value);
+    }
+    /// <summary>
+    /// The fifth variable (accessed by [4])
+    /// </summary>
+    public IBinding Var4
+    {
+        get => _binding.Bindings[4];
+        set => SetBinding(4, value);
+    }
+    /// <summary>
+    /// The sixth variable (accessed by [5])
+    /// </summary>
+    public IBinding Var5
+    {
+        get => _binding.Bindings[5];
+        set => SetBinding(5, value);
+    }
+    /// <summary>
+    /// The seventh variable (accessed by [6])
+    /// </summary>
+    public IBinding Var6
+    {
+        get => _binding.Bindings[6];
+        set => SetBinding(6, value);
+    }
+    /// <summary>
+    /// The eighth variable (accessed by [7])
+    /// </summary>
+    public IBinding Var7
+    {
+        get => _binding.Bindings[7];
+        set => SetBinding(7, value);
+    }
+    /// <summary>
+    /// The ninth variable (accessed by [8])
+    /// </summary>
+    public IBinding Var8
+    {
+        get => _binding.Bindings[8];
+        set => SetBinding(8, value);
+    }
+    /// <summary>
+    /// The tenth variable (accessed by [9])
+    /// </summary>
+    public IBinding Var9
+    {
+        get => _binding.Bindings[9];
+        set => SetBinding(9, value);
+    }
+#endif
+
+
 }

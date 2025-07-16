@@ -1,0 +1,15 @@
+﻿<Project Sdk="MSBuild.Sdk.Extras/3.0.44">
+
+	<PropertyGroup>
+		<AssemblyName>MathConverter</AssemblyName>
+		<PackageTags>Avalonia</PackageTags>
+		<PackageId>MathConverter.Avalonia</PackageId>
+	</PropertyGroup>
+
+	<Import Project="..\..\Common\Avalonia.props" />
+	<Import Project="..\..\Common\App.props" />
+
+	<ItemGroup>
+		<PackageReference Include="Avalonia" Version="11.3.2" Condition="$(TargetFramework.StartsWith('net8.0'))"/>
+	</ItemGroup>
+</Project>
